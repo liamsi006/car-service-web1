@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Service Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .login-box p {
+            margin-bottom: 30px;
+            color: #7f8c8d;
+        }
+
+        .car-icon {
+            font-size: 3rem;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border 0.3s;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .login-error {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* Main App (hidden by default) */
+        .main-app {
+            display: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .user-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        .current-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-role {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .app-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-section, .records-section, .users-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .users-section {
+            min-width: 350px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #3498db;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .user-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .permission-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .permission-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .permission-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+
+        .permission-option input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .user-permissions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .permission-tag {
+            background-color: #eaf2f8;
+            color: #3498db;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .user-actions-small {
+            display: flex;
+            gap: 5px;
+        }
+
+        .oil-options {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+        }
+
+        .oil-option-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .oil-option {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .oil-option label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+
+        .oil-option input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .oil-option.selected label {
+            border-color: #2ecc71;
+            background-color: #e8f8f1;
+        }
+
+        .oil-summary {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f8f1;
+            border-radius: 5px;
+            border: 1px solid #2ecc71;
+        }
+
+        .oil-summary h4 {
+            margin-bottom: 8px;
+            color: #27ae60;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .oil-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .oil-tag {
+            background-color: #2ecc71;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            background-color: #7f8c8d;
+        }
+
+        .btn-logout:hover {
+            background-color: #636e72;
+        }
+
+        .btn-manage-users {
+            background-color: #9b59b6;
+        }
+
+        .btn-manage-users:hover {
+            background-color: #8e44ad;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-edit {
+            background-color: #f39c12;
+        }
+
+        .btn-edit:hover {
+            background-color: #d68910;
+        }
+
+        .btn-share {
+            background-color: #2ecc71;
+        }
+
+        .btn-share:hover {
+            background-color: #27ae60;
+        }
+
+        .record-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s;
+        }
+
+        .record-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .car-type {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .service-type {
+            display: inline-block;
+            background-color: #eaf2f8;
+            color: #3498db;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .record-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .record-footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .record-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .oil-info-container {
+            margin-top: 10px;
+        }
+
+        .oil-tags-record {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .oil-tag-record {
+            background-color: #fff9e6;
+            color: #f39c12;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            border: 1px solid #f1c40f;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .share-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .share-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .share-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .share-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .email-icon {
+            background-color: #3498db;
+        }
+
+        .whatsapp-icon {
+            background-color: #25D366;
+        }
+
+        .link-icon {
+            background-color: #9b59b6;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .empty-records, .empty-users {
+            text-align: center;
+            padding: 40px 20px;
+            color: #95a5a6;
+        }
+
+        .empty-records i, .empty-users i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1100px) {
+            .app-wrapper {
+                flex-direction: column;
+            }
+            
+            .record-details {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .record-actions {
+                flex-direction: column;
+            }
+            
+            .btn-share {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
+            .oil-option {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-box">
+                <div class="car-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h2>Car Service Tracker</h2>
+                <p>Track and manage vehicle maintenance records</p>
+                
+                <div class="login-error" id="loginError">
+                    <i class="fas fa-exclamation-circle"></i> Incorrect password. Please try again.
+                </div>
+                
+                <input type="password" id="passwordInput" class="password-input" placeholder="Enter access password">
+                <button class="btn" id="loginBtn">
+                    <i class="fas fa-lock"></i> Access App
+                </button>
+                
+                <div style="margin-top: 20px; font-size: 0.9rem; color: #95a5a6;">
+                    <p><i class="fas fa-info-circle"></i> Password-protected access for authorized users</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (hidden until login) -->
+        <div class="main-app" id="mainApp">
+            <header>
+                <h1><i class="fas fa-car"></i> Car Service Tracker</h1>
+                <p>Vehicle maintenance records and service history</p>
+                <div class="user-info-bar">
+                    <div class="current-user">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="currentUserName">Loading...</span>
+                        <span class="user-role" id="currentUserRole">Loading...</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-manage-users" id="manageUsersBtn">
+                            <i class="fas fa-users-cog"></i> Manage Users
+                        </button>
+                        <button class="btn btn-logout" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="app-wrapper">
+                <!-- Form Section -->
+                <section class="form-section" id="formSection">
+                    <h2 class="section-title"><i class="fas fa-plus-circle"></i> Add Service Record</h2>
+                    <form id="serviceForm">
+                        <div class="form-group">
+                            <label for="carType"><i class="fas fa-car"></i> Car Type / Model</label>
+                            <input type="text" id="carType" class="form-control" placeholder="e.g., Toyota Camry 2020" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serviceType"><i class="fas fa-tools"></i> Type of Service</label>
+                            <select id="serviceType" class="form-control" required>
+                                <option value="">Select a service type</option>
+                                <option value="Oil Change">Oil Change</option>
+                                <option value="Brake Service">Brake Service</option>
+                                <option value="Tire Rotation">Tire Rotation</option>
+                                <option value="Engine Tune-up">Engine Tune-up</option>
+                                <option value="Transmission Service">Transmission Service</option>
+                                <option value="AC Service">AC Service</option>
+                                <option value="Battery Replacement">Battery Replacement</option>
+                                <option value="General Maintenance">General Maintenance</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Oil Type Selection (Visible only when Oil Change is selected) -->
+                        <div id="oilOptions" class="oil-options">
+                            <label><i class="fas fa-oil-can"></i> Select Oil Type(s)</label>
+                            <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">
+                                <i class="fas fa-info-circle"></i> You can select multiple oil types for comprehensive oil change services
+                            </p>
+                            <div class="oil-option-group">
+                                <div class="oil-option">
+                                    <input type="checkbox" id="engineOil" name="oilType" value="Engine Oil">
+                                    <label for="engineOil">Engine Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="gearOil" name="oilType" value="Gear Oil">
+                                    <label for="gearOil">Gear Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="transmissionOil" name="oilType" value="Transmission Oil">
+                                    <label for="transmissionOil">Transmission Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="differentialOil" name="oilType" value="Differential Oil">
+                                    <label for="differentialOil">Differential Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="syntheticOil" name="oilType" value="Full Synthetic Oil">
+                                    <label for="syntheticOil">Full Synthetic Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="semiSyntheticOil" name="oilType" value="Semi-Synthetic Oil">
+                                    <label for="semiSyntheticOil">Semi-Synthetic Oil</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="brakeFluid" name="oilType" value="Brake Fluid">
+                                    <label for="brakeFluid">Brake Fluid</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="powerSteeringFluid" name="oilType" value="Power Steering Fluid">
+                                    <label for="powerSteeringFluid">Power Steering Fluid</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="coolant" name="oilType" value="Coolant">
+                                    <label for="coolant">Coolant</label>
+                                </div>
+                                <div class="oil-option">
+                                    <input type="checkbox" id="otherOil" name="oilType" value="Other Oil Type">
+                                    <label for="otherOil">Other Oil Type</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected oil types summary -->
+                            <div id="oilSummary" class="oil-summary">
+                                <h4><i class="fas fa-check-circle"></i> Selected Oil Types</h4>
+                                <div id="selectedOilTags" class="oil-tags">
+                                    <!-- Selected oil tags will appear here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serviceDate"><i class="fas fa-calendar-alt"></i> Service Date</label>
+                            <input type="date" id="serviceDate" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="price"><i class="fas fa-dollar-sign"></i> Price</label>
+                            <input type="number" id="price" class="form-control" placeholder="e.g., 150.00" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes"><i class="fas fa-sticky-note"></i> Additional Notes</label>
+                            <textarea id="notes" class="form-control" rows="3" placeholder="Any additional details about the service..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn" id="saveRecordBtn">
+                            <i class="fas fa-save"></i> Save Service Record
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Records Section -->
+                <section class="records-section" id="recordsSection">
+                    <h2 class="section-title"><i class="fas fa-history"></i> Service History</h2>
+                    <div id="recordsList">
+                        <!-- Records will be displayed here -->
+                        <div class="empty-records">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No Service Records Yet</h3>
+                            <p>Add your first car service record using the form on the left</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Management Section (hidden by default) -->
+                <section class="users-section" id="usersSection" style="display: none;">
+                    <h2 class="section-title"><i class="fas fa-users-cog"></i> Manage Users</h2>
+                    
+                    <div class="user-form">
+                        <h3 style="margin-bottom: 15px; color: #2c3e50;">
+                            <i class="fas fa-user-plus"></i> Add New User
+                        </h3>
+                        <form id="userForm">
+                            <div class="form-group">
+                                <label for="userName"><i class="fas fa-user"></i> Full Name</label>
+                                <input type="text" id="userName" class="form-control" placeholder="Enter full name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-shield-alt"></i> Permissions</label>
+                                <div class="permission-options">
+                                    <div class="permission-option">
+                                        <input type="checkbox" id="permAdd" name="permissions" value="add" checked>
+                                        <label for="permAdd">Add Records</label>
+                                    </div>
+                                    <div class="permission-option">
+                                        <input type="checkbox" id="permEdit" name="permissions" value="edit">
+                                        <label for="permEdit">Edit Records</label>
+                                    </div>
+                                    <div class="permission-option">
+                                        <input type="checkbox" id="permDelete" name="permissions" value="delete">
+                                        <label for="permDelete">Delete Records</label>
+                                    </div>
+                                    <div class="permission-option">
+                                        <input type="checkbox" id="permShare" name="permissions" value="share">
+                                        <label for="permShare">Share Records</label>
+                                    </div>
+                                    <div class="permission-option">
+                                        <input type="checkbox" id="permManageUsers" name="permissions" value="manage_users">
+                                        <label for="permManageUsers">Manage Users</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn">
+                                <i class="fas fa-user-plus"></i> Add User
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <h3 style="margin: 25px 0 15px 0; color: #2c3e50;">
+                        <i class="fas fa-users"></i> Current Users
+                    </h3>
+                    <div class="user-list" id="userList">
+                        <!-- Users will be displayed here -->
+                        <div class="empty-users">
+                            <i class="fas fa-users"></i>
+                            <h3>No Users Added</h3>
+                            <p>Add your first user using the form above</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn" id="backToMainBtn">
+                            <i class="fas fa-arrow-left"></i> Back to Service Records
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Share Modal -->
+            <div id="shareModal" class="share-modal">
+                <div class="share-content">
+                    <button class="close-modal" id="closeModal">&times;</button>
+                    <h2 class="section-title"><i class="fas fa-share-alt"></i> Share Service Record</h2>
+                    <p id="shareRecordText"></p>
+                    
+                    <div class="share-options">
+                        <div class="share-option" id="shareEmail">
+                            <div class="share-icon email-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span>Email</span>
+                        </div>
+                        
+                        <div class="share-option" id="shareWhatsApp">
+                            <div class="share-icon whatsapp-icon">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <span>WhatsApp</span>
+                        </div>
+                        
+                        <div class="share-option" id="shareLink">
+                            <div class="share-icon link-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <span>Copy Link</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p style="font-size: 0.9rem; color: #7f8c8d;">
+                            The record will be shared as text with all the details
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                <p>Car Service Tracker &copy; 2026 | Vehicle maintenance records system</p>
+                <p>Developed by Liamsi006</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // Access password
+        const ACCESS_PASSWORD = "tracker123";
+        
+        // Permission constants
+        const PERMISSIONS = {
+            ADD: 'add',
+            EDIT: 'edit',
+            DELETE: 'delete',
+            SHARE: 'share',
+            MANAGE_USERS: 'manage_users'
+        };
+        
+        // Initialize with today's date
+        document.getElementById('serviceDate').valueAsDate = new Date();
+        
+        // Default admin user
+        const defaultAdminUser = {
+            id: 1,
+            name: "Admin User",
+            permissions: [PERMISSIONS.ADD, PERMISSIONS.EDIT, PERMISSIONS.DELETE, PERMISSIONS.SHARE, PERMISSIONS.MANAGE_USERS],
+            role: "Administrator",
+            isActive: true
+        };
+        
+        // Global variables
+        let serviceRecords = [];
+        let users = [];
+        let currentUser = defaultAdminUser;
+        let currentRecordToShare = null;
+
+        // Initialize data
+        function initializeData() {
+            // Service records (empty at start)
+            serviceRecords = [];
+            
+            // Users (starting with just the admin)
+            users = [defaultAdminUser];
+            
+            // Current logged in user (starts as admin)
+            currentUser = defaultAdminUser;
+        }
+
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const manageUsersBtn = document.getElementById('manageUsersBtn');
+        const currentUserName = document.getElementById('currentUserName');
+        const currentUserRole = document.getElementById('currentUserRole');
+        const serviceForm = document.getElementById('serviceForm');
+        const serviceTypeSelect = document.getElementById('serviceType');
+        const oilOptionsDiv = document.getElementById('oilOptions');
+        const oilSummaryDiv = document.getElementById('oilSummary');
+        const selectedOilTagsDiv = document.getElementById('selectedOilTags');
+        const recordsList = document.getElementById('recordsList');
+        const shareModal = document.getElementById('shareModal');
+        const closeModal = document.getElementById('closeModal');
+        const shareRecordText = document.getElementById('shareRecordText');
+        const shareEmail = document.getElementById('shareEmail');
+        const shareWhatsApp = document.getElementById('shareWhatsApp');
+        const shareLink = document.getElementById('shareLink');
+        const oilTypeCheckboxes = document.querySelectorAll('input[name="oilType"]');
+        const formSection = document.getElementById('formSection');
+        const recordsSection = document.getElementById('recordsSection');
+        const usersSection = document.getElementById('usersSection');
+        const userForm = document.getElementById('userForm');
+        const userList = document.getElementById('userList');
+        const backToMainBtn = document.getElementById('backToMainBtn');
+        const saveRecordBtn = document.getElementById('saveRecordBtn');
+
+        // Login function
+        function handleLogin() {
+            const enteredPassword = passwordInput.value;
+            
+            if (enteredPassword === ACCESS_PASSWORD) {
+                // Successful login
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                loginError.style.display = 'none';
+                passwordInput.value = '';
+                
+                // Load data from localStorage if available
+                loadFromLocalStorage();
+                
+                // Update UI for current user
+                updateCurrentUserUI();
+                renderRecords();
+                renderUsers();
+                updateUIForPermissions();
+            } else {
+                // Failed login
+                loginError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Allow login with Enter key
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+
+            // Logout function
+            logoutBtn.addEventListener('click', function() {
+                if (confirm("Are you sure you want to logout?")) {
+                    // Save to localStorage before logout
+                    saveToLocalStorage();
+                    
+                    mainApp.style.display = 'none';
+                    loginScreen.style.display = 'flex';
+                }
+            });
+
+            // Manage users button
+            manageUsersBtn.addEventListener('click', function() {
+                if (currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                    formSection.style.display = 'none';
+                    recordsSection.style.display = 'none';
+                    usersSection.style.display = 'block';
+                } else {
+                    alert("You don't have permission to manage users.");
+                }
+            });
+
+            // Back to main button
+            backToMainBtn.addEventListener('click', function() {
+                formSection.style.display = 'block';
+                recordsSection.style.display = 'block';
+                usersSection.style.display = 'none';
+            });
+
+            // Listen for oil type checkbox changes
+            oilTypeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedOilTypes);
+            });
+
+            // Listen for service type changes
+            serviceTypeSelect.addEventListener('change', toggleOilOptions);
+
+            // Add new record
+            serviceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!currentUser.permissions.includes(PERMISSIONS.ADD)) {
+                    alert("You don't have permission to add records.");
+                    return;
+                }
+                
+                // Get selected oil types if applicable
+                let selectedOilTypes = [];
+                if (serviceTypeSelect.value === "Oil Change") {
+                    const selectedCheckboxes = document.querySelectorAll('input[name="oilType"]:checked');
+                    selectedOilTypes = Array.from(selectedCheckboxes).map(cb => cb.value);
+                }
+                
+                const now = new Date().toISOString();
+                const newRecord = {
+                    id: serviceRecords.length > 0 ? Math.max(...serviceRecords.map(r => r.id)) + 1 : 1,
+                    carType: document.getElementById('carType').value,
+                    serviceType: serviceTypeSelect.value,
+                    oilTypes: selectedOilTypes,
+                    serviceDate: document.getElementById('serviceDate').value,
+                    price: parseFloat(document.getElementById('price').value),
+                    notes: document.getElementById('notes').value,
+                    createdBy: currentUser.name,
+                    createdAt: now,
+                    lastModifiedBy: currentUser.name,
+                    lastModifiedAt: now
+                };
+                
+                serviceRecords.push(newRecord);
+                renderRecords();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+                
+                // Reset form
+                serviceForm.reset();
+                document.getElementById('serviceDate').valueAsDate = new Date();
+                
+                // Reset oil options
+                toggleOilOptions();
+                
+                // Scroll to the new record
+                setTimeout(() => {
+                    const recordElement = document.getElementById(`record-${newRecord.id}`);
+                    if (recordElement) {
+                        recordElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }, 100);
+            });
+
+            // Add new user
+            userForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                    alert("You don't have permission to manage users.");
+                    return;
+                }
+                
+                const userName = document.getElementById('userName').value;
+                const permissionCheckboxes = document.querySelectorAll('input[name="permissions"]:checked');
+                const userPermissions = Array.from(permissionCheckboxes).map(cb => cb.value);
+                
+                // Determine role based on permissions
+                let userRole = "Standard User";
+                if (userPermissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                    userRole = "Administrator";
+                } else if (userPermissions.length >= 3) {
+                    userRole = "Advanced User";
+                }
+                
+                const newUser = {
+                    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+                    name: userName,
+                    permissions: userPermissions,
+                    role: userRole,
+                    isActive: true
+                };
+                
+                users.push(newUser);
+                renderUsers();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+                
+                // Reset form
+                userForm.reset();
+                
+                // Check "add" permission by default
+                document.getElementById('permAdd').checked = true;
+                
+                alert(`User "${userName}" added successfully with ${userPermissions.length} permission(s).`);
+            });
+
+            // Close modal
+            closeModal.addEventListener('click', () => {
+                shareModal.style.display = 'none';
+            });
+
+            // Share via Email
+            shareEmail.addEventListener('click', () => {
+                if (currentRecordToShare) {
+                    const subject = `Car Service Record: ${currentRecordToShare.carType}`;
+                    
+                    let body = `Car Service Record:\n`;
+                    body += `Car: ${currentRecordToShare.carType}\n`;
+                    body += `Service: ${currentRecordToShare.serviceType}\n`;
+                    
+                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
+                        body += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
+                    }
+                    
+                    body += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
+                    body += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
+                    
+                    if (currentRecordToShare.notes) {
+                        body += `Notes: ${currentRecordToShare.notes}\n`;
+                    }
+                    
+                    body += `\nShared via Car Service Tracker`;
+                    
+                    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                }
+            });
+
+            // Share via WhatsApp
+            shareWhatsApp.addEventListener('click', () => {
+                if (currentRecordToShare) {
+                    let text = `Car Service Record:\n`;
+                    text += `Car: ${currentRecordToShare.carType}\n`;
+                    text += `Service: ${currentRecordToShare.serviceType}\n`;
+                    
+                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
+                        text += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
+                    }
+                    
+                    text += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
+                    text += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
+                    
+                    if (currentRecordToShare.notes) {
+                        text += `Notes: ${currentRecordToShare.notes}\n`;
+                    }
+                    
+                    text += `\nShared via Car Service Tracker`;
+                    
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                }
+            });
+
+            // Copy link to clipboard
+            shareLink.addEventListener('click', () => {
+                if (currentRecordToShare) {
+                    let text = `Car Service Record:\n`;
+                    text += `Car: ${currentRecordToShare.carType}\n`;
+                    text += `Service: ${currentRecordToShare.serviceType}\n`;
+                    
+                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
+                        text += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
+                    }
+                    
+                    text += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
+                    text += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
+                    
+                    if (currentRecordToShare.notes) {
+                        text += `Notes: ${currentRecordToShare.notes}\n`;
+                    }
+                    
+                    text += `\nShared via Car Service Tracker`;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('Service record copied to clipboard! You can now paste it anywhere.');
+                    });
+                }
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === shareModal) {
+                    shareModal.style.display = 'none';
+                }
+            });
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Format datetime
+        function formatDateTime(dateTimeString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateTimeString).toLocaleDateString('en-US', options);
+        }
+
+        // Update selected oil types display
+        function updateSelectedOilTypes() {
+            const selectedCheckboxes = document.querySelectorAll('input[name="oilType"]:checked');
+            const selectedValues = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            // Update summary display
+            if (selectedValues.length > 0) {
+                oilSummaryDiv.style.display = 'block';
+                selectedOilTagsDiv.innerHTML = selectedValues.map(value => 
+                    `<div class="oil-tag"><i class="fas fa-check"></i> ${value}</div>`
+                ).join('');
+            } else {
+                oilSummaryDiv.style.display = 'none';
+                selectedOilTagsDiv.innerHTML = '';
+            }
+            
+            // Update visual feedback for selected options
+            oilTypeCheckboxes.forEach(checkbox => {
+                const optionDiv = checkbox.parentElement.parentElement;
+                if (checkbox.checked) {
+                    optionDiv.classList.add('selected');
+                } else {
+                    optionDiv.classList.remove('selected');
+                }
+            });
+        }
+
+        // Show/hide oil options based on service type selection
+        function toggleOilOptions() {
+            const selectedService = serviceTypeSelect.value;
+            
+            if (selectedService === "Oil Change") {
+                oilOptionsDiv.style.display = 'block';
+                updateSelectedOilTypes();
+            } else {
+                oilOptionsDiv.style.display = 'none';
+                oilSummaryDiv.style.display = 'none';
+                // Clear oil type selection
+                oilTypeCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.parentElement.classList.remove('selected');
+                });
+                selectedOilTagsDiv.innerHTML = '';
+            }
+        }
+
+        // Update current user UI
+        function updateCurrentUserUI() {
+            currentUserName.textContent = currentUser.name;
+            currentUserRole.textContent = currentUser.role;
+        }
+
+        // Update UI based on user permissions
+        function updateUIForPermissions() {
+            // Show/hide add record button
+            saveRecordBtn.disabled = !currentUser.permissions.includes(PERMISSIONS.ADD);
+            
+            // Show/hide manage users button
+            manageUsersBtn.style.display = currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS) ? 'inline-block' : 'none';
+        }
+
+        // Generate record HTML
+        function generateRecordHTML(record) {
+            // Generate oil type tags if any
+            const oilTagsHTML = record.oilTypes && record.oilTypes.length > 0 ? 
+                `<div class="oil-info-container">
+                    <div class="oil-tags-record">
+                        ${record.oilTypes.map(oil => 
+                            `<div class="oil-tag-record"><i class="fas fa-oil-can"></i> ${oil}</div>`
+                        ).join('')}
+                    </div>
+                </div>` : '';
+            
+            // Check user permissions for this record
+            const canEdit = currentUser.permissions.includes(PERMISSIONS.EDIT);
+            const canDelete = currentUser.permissions.includes(PERMISSIONS.DELETE);
+            const canShare = currentUser.permissions.includes(PERMISSIONS.SHARE);
+            
+            return `
+                <div class="record-item" id="record-${record.id}">
+                    <div class="record-header">
+                        <div class="car-type">${record.carType}</div>
+                        <span class="service-type">${record.serviceType}</span>
+                    </div>
+                    
+                    ${oilTagsHTML}
+                    
+                    <div class="record-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Service Date</span>
+                            <span class="detail-value">${formatDate(record.serviceDate)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Price</span>
+                            <span class="detail-value">${formatCurrency(record.price)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Record ID</span>
+                            <span class="detail-value">#${record.id.toString().padStart(3, '0')}</span>
+                        </div>
+                        ${record.oilTypes && record.oilTypes.length > 0 ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Oil Types</span>
+                            <span class="detail-value">${record.oilTypes.length} type(s)</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${record.notes ? `
+                        <div class="detail-item" style="margin-top: 10px;">
+                            <span class="detail-label">Notes</span>
+                            <span class="detail-value">${record.notes}</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="record-footer">
+                        <div>
+                            <span class="detail-label">Created by ${record.createdBy} on ${formatDateTime(record.createdAt)}</span>
+                        </div>
+                        <div>
+                            ${record.lastModifiedBy !== record.createdBy ? 
+                                `<span class="detail-label">Last modified by ${record.lastModifiedBy}</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="record-actions">
+                        ${canDelete ? `
+                        <button class="btn btn-delete" onclick="deleteRecord(${record.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                        ` : ''}
+                        
+                        ${canEdit ? `
+                        <button class="btn btn-edit" onclick="editRecord(${record.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        ` : ''}
+                        
+                        ${canShare ? `
+                        <button class="btn btn-share" onclick="openShareModal(${record.id})">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Generate user HTML
+        function generateUserHTML(user) {
+            const isCurrentUser = user.id === currentUser.id;
+            const canManageUsers = currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS);
+            
+            return `
+                <div class="user-item" id="user-${user.id}">
+                    <div class="user-details">
+                        <div class="user-name">
+                            ${user.name}
+                            ${isCurrentUser ? ' <span style="color: #3498db;">(You)</span>' : ''}
+                            ${user.role === "Administrator" ? ' <span style="color: #e74c3c;">(Admin)</span>' : ''}
+                        </div>
+                        <div class="user-permissions">
+                            ${user.permissions.map(perm => 
+                                `<span class="permission-tag">${perm.replace('_', ' ')}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <div class="user-actions-small">
+                        ${canManageUsers && !isCurrentUser ? `
+                        <button class="btn btn-small btn-edit" onclick="editUser(${user.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-delete" onclick="deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render records
+        function renderRecords() {
+            if (!serviceRecords || serviceRecords.length === 0) {
+                recordsList.innerHTML = `
+                    <div class="empty-records">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No Service Records Yet</h3>
+                        <p>Add your first car service record using the form on the left</p>
+                    </div>
+                `;
+                return;
+            }
+
+            recordsList.innerHTML = serviceRecords
+                .map(record => generateRecordHTML(record))
+                .reverse()
+                .join('');
+        }
+
+        // Render users
+        function renderUsers() {
+            if (!users || users.length === 0) {
+                userList.innerHTML = `
+                    <div class="empty-users">
+                        <i class="fas fa-users"></i>
+                        <h3>No Users Added</h3>
+                        <p>Add your first user using the form above</p>
+                    </div>
+                `;
+                return;
+            }
+
+            userList.innerHTML = users
+                .map(user => generateUserHTML(user))
+                .join('');
+        }
+
+        // Edit record (simplified - in a real app, this would populate the form)
+        function editRecord(id) {
+            if (!currentUser.permissions.includes(PERMISSIONS.EDIT)) {
+                alert("You don't have permission to edit records.");
+                return;
+            }
+            
+            const record = serviceRecords.find(r => r.id === id);
+            if (record) {
+                // In a more advanced version, this would populate the form for editing
+                // For now, we'll just update the last modified info
+                const now = new Date().toISOString();
+                record.lastModifiedBy = currentUser.name;
+                record.lastModifiedAt = now;
+                
+                // Save and re-render
+                saveToLocalStorage();
+                renderRecords();
+                
+                alert(`Record #${id} marked as modified by ${currentUser.name}. In a full implementation, you would be able to edit all fields.`);
+            }
+        }
+
+        // Delete record
+        function deleteRecord(id) {
+            if (!currentUser.permissions.includes(PERMISSIONS.DELETE)) {
+                alert("You don't have permission to delete records.");
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete this service record?")) {
+                serviceRecords = serviceRecords.filter(record => record.id !== id);
+                renderRecords();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+            }
+        }
+
+        // Edit user (simplified)
+        function editUser(id) {
+            alert(`Editing user #${id}. In a full implementation, this would open an edit form.`);
+        }
+
+        // Delete user
+        function deleteUser(id) {
+            if (!currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                alert("You don't have permission to delete users.");
+                return;
+            }
+            
+            const userToDelete = users.find(u => u.id === id);
+            if (!userToDelete) return;
+            
+            if (confirm(`Are you sure you want to remove "${userToDelete.name}"?`)) {
+                users = users.filter(user => user.id !== id);
+                renderUsers();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+            }
+        }
+
+        // Open share modal
+        function openShareModal(id) {
+            if (!currentUser.permissions.includes(PERMISSIONS.SHARE)) {
+                alert("You don't have permission to share records.");
+                return;
+            }
+            
+            currentRecordToShare = serviceRecords.find(record => record.id === id);
+            
+            if (currentRecordToShare) {
+                let shareText = `Car Service Record:\n`;
+                shareText += `Car: ${currentRecordToShare.carType}\n`;
+                shareText += `Service: ${currentRecordToShare.serviceType}\n`;
+                
+                if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
+                    shareText += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
+                }
+                
+                shareText += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
+                shareText += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
+                
+                if (currentRecordToShare.notes) {
+                    shareText += `Notes: ${currentRecordToShare.notes}\n`;
+                }
+                
+                shareText += `\nShared via Car Service Tracker`;
+                
+                shareRecordText.textContent = shareText;
+                shareModal.style.display = 'flex';
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('carServiceRecords', JSON.stringify(serviceRecords));
+            localStorage.setItem('carServiceUsers', JSON.stringify(users));
+            localStorage.setItem('currentCarServiceUser', JSON.stringify(currentUser));
+        }
+
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            const savedRecords = localStorage.getItem('carServiceRecords');
+            const savedUsers = localStorage.getItem('carServiceUsers');
+            const savedCurrentUser = localStorage.getItem('currentCarServiceUser');
+            
+            if (savedRecords) {
+                serviceRecords = JSON.parse(savedRecords);
+            }
+            
+            if (savedUsers) {
+                users = JSON.parse(savedUsers);
+            }
+            
+            if (savedCurrentUser) {
+                currentUser = JSON.parse(savedCurrentUser);
+            }
+            
+            // If no data in localStorage, initialize with default data
+            if (!serviceRecords || serviceRecords.length === 0) {
+                initializeData();
+            }
+        }
+
+        // Initialize oil options visibility
+        function initializeUI() {
+            toggleOilOptions();
+        }
+
+        // Auto-login for convenience during development
+        // Remove this in production or change the password
+        function autoLoginForDevelopment() {
+            setTimeout(() => {
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                initializeData();
+                loadFromLocalStorage();
+                updateCurrentUserUI();
+                renderRecords();
+                renderUsers();
+                updateUIForPermissions();
+                initializeUI();
+            }, 100);
+        }
+
+        // Initialize everything when page loads
+        function initializeApp() {
+            // Initialize data
+            initializeData();
+            
+            // Initialize event listeners
+            initializeEventListeners();
+            
+            // Initialize UI
+            initializeUI();
+            
+            // Auto-login for development (comment this out for production)
+            autoLoginForDevelopment();
+        }
+
+        // Start the app when page loads
+        window.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
