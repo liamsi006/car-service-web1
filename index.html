@@ -930,9 +930,6 @@
             MANAGE_USERS: 'manage_users'
         };
         
-        // Initialize with today's date
-        document.getElementById('serviceDate').valueAsDate = new Date();
-        
         // Default admin user
         const defaultAdminUser = {
             id: 1,
@@ -945,724 +942,495 @@
         // Global variables
         let serviceRecords = [];
         let users = [];
-        let currentUser = defaultAdminUser;
+        // DO NOT auto-login on load: start with no currentUser
+        let currentUser = null;
         let currentRecordToShare = null;
 
-        // Initialize data
+        // DOM Elements (will be assigned on DOMContentLoaded)
+        let loginScreen, mainApp, passwordInput, loginBtn, loginError, logoutBtn, manageUsersBtn;
+        let currentUserName, currentUserRole, serviceForm, serviceTypeSelect, oilOptionsDiv, oilSummaryDiv, selectedOilTagsDiv;
+        let recordsList, shareModal, closeModal, shareRecordText, shareEmail, shareWhatsApp, shareLink;
+        let formSection, recordsSection, usersSection, userForm, userList, backToMainBtn, saveRecordBtn;
+
         function initializeData() {
-            // Service records (empty at start)
             serviceRecords = [];
-            
-            // Users (starting with just the admin)
             users = [defaultAdminUser];
-            
-            // Current logged in user (starts as admin)
-            currentUser = defaultAdminUser;
+            currentUser = null; // do not auto-login
+
+            renderUsers();
+            renderRecords();
         }
 
-        // DOM Elements
-        const loginScreen = document.getElementById('loginScreen');
-        const mainApp = document.getElementById('mainApp');
-        const passwordInput = document.getElementById('passwordInput');
-        const loginBtn = document.getElementById('loginBtn');
-        const loginError = document.getElementById('loginError');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const manageUsersBtn = document.getElementById('manageUsersBtn');
-        const currentUserName = document.getElementById('currentUserName');
-        const currentUserRole = document.getElementById('currentUserRole');
-        const serviceForm = document.getElementById('serviceForm');
-        const serviceTypeSelect = document.getElementById('serviceType');
-        const oilOptionsDiv = document.getElementById('oilOptions');
-        const oilSummaryDiv = document.getElementById('oilSummary');
-        const selectedOilTagsDiv = document.getElementById('selectedOilTags');
-        const recordsList = document.getElementById('recordsList');
-        const shareModal = document.getElementById('shareModal');
-        const closeModal = document.getElementById('closeModal');
-        const shareRecordText = document.getElementById('shareRecordText');
-        const shareEmail = document.getElementById('shareEmail');
-        const shareWhatsApp = document.getElementById('shareWhatsApp');
-        const shareLink = document.getElementById('shareLink');
-        const oilTypeCheckboxes = document.querySelectorAll('input[name="oilType"]');
-        const formSection = document.getElementById('formSection');
-        const recordsSection = document.getElementById('recordsSection');
-        const usersSection = document.getElementById('usersSection');
-        const userForm = document.getElementById('userForm');
-        const userList = document.getElementById('userList');
-        const backToMainBtn = document.getElementById('backToMainBtn');
-        const saveRecordBtn = document.getElementById('saveRecordBtn');
+        function showLoginScreen() {
+            loginScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
+            currentUserName.textContent = 'Not logged in';
+            currentUserRole.textContent = '';
+            loginError.style.display = 'none';
+        }
 
-        // Login function
+        function showMainApp() {
+            loginScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            updateUserDisplay();
+            renderRecords();
+            renderUsers();
+        }
+
+        function updateUserDisplay() {
+            if (currentUser) {
+                currentUserName.textContent = currentUser.name;
+                currentUserRole.textContent = currentUser.role || '';
+            } else {
+                currentUserName.textContent = 'Not logged in';
+                currentUserRole.textContent = '';
+            }
+        }
+
         function handleLogin() {
-            const enteredPassword = passwordInput.value;
-            
+            const enteredPassword = passwordInput.value.trim();
             if (enteredPassword === ACCESS_PASSWORD) {
-                // Successful login
-                loginScreen.style.display = 'none';
-                mainApp.style.display = 'block';
+                // Successful login: sign in as default admin (or later implement user selection)
+                currentUser = defaultAdminUser;
+                passwordInput.value = '';
                 loginError.style.display = 'none';
-                passwordInput.value = '';
-                
-                // Load data from localStorage if available
-                loadFromLocalStorage();
-                
-                // Update UI for current user
-                updateCurrentUserUI();
-                renderRecords();
-                renderUsers();
-                updateUIForPermissions();
+                showMainApp();
             } else {
-                // Failed login
                 loginError.style.display = 'block';
-                passwordInput.value = '';
-                passwordInput.focus();
             }
         }
 
-        // Initialize event listeners
-        function initializeEventListeners() {
-            loginBtn.addEventListener('click', handleLogin);
-            
-            // Allow login with Enter key
-            passwordInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-
-            // Logout function
-            logoutBtn.addEventListener('click', function() {
-                if (confirm("Are you sure you want to logout?")) {
-                    // Save to localStorage before logout
-                    saveToLocalStorage();
-                    
-                    mainApp.style.display = 'none';
-                    loginScreen.style.display = 'flex';
-                }
-            });
-
-            // Manage users button
-            manageUsersBtn.addEventListener('click', function() {
-                if (currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
-                    formSection.style.display = 'none';
-                    recordsSection.style.display = 'none';
-                    usersSection.style.display = 'block';
-                } else {
-                    alert("You don't have permission to manage users.");
-                }
-            });
-
-            // Back to main button
-            backToMainBtn.addEventListener('click', function() {
-                formSection.style.display = 'block';
-                recordsSection.style.display = 'block';
-                usersSection.style.display = 'none';
-            });
-
-            // Listen for oil type checkbox changes
-            oilTypeCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateSelectedOilTypes);
-            });
-
-            // Listen for service type changes
-            serviceTypeSelect.addEventListener('change', toggleOilOptions);
-
-            // Add new record
-            serviceForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                if (!currentUser.permissions.includes(PERMISSIONS.ADD)) {
-                    alert("You don't have permission to add records.");
-                    return;
-                }
-                
-                // Get selected oil types if applicable
-                let selectedOilTypes = [];
-                if (serviceTypeSelect.value === "Oil Change") {
-                    const selectedCheckboxes = document.querySelectorAll('input[name="oilType"]:checked');
-                    selectedOilTypes = Array.from(selectedCheckboxes).map(cb => cb.value);
-                }
-                
-                const now = new Date().toISOString();
-                const newRecord = {
-                    id: serviceRecords.length > 0 ? Math.max(...serviceRecords.map(r => r.id)) + 1 : 1,
-                    carType: document.getElementById('carType').value,
-                    serviceType: serviceTypeSelect.value,
-                    oilTypes: selectedOilTypes,
-                    serviceDate: document.getElementById('serviceDate').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    notes: document.getElementById('notes').value,
-                    createdBy: currentUser.name,
-                    createdAt: now,
-                    lastModifiedBy: currentUser.name,
-                    lastModifiedAt: now
-                };
-                
-                serviceRecords.push(newRecord);
-                renderRecords();
-                
-                // Save to localStorage
-                saveToLocalStorage();
-                
-                // Reset form
-                serviceForm.reset();
-                document.getElementById('serviceDate').valueAsDate = new Date();
-                
-                // Reset oil options
-                toggleOilOptions();
-                
-                // Scroll to the new record
-                setTimeout(() => {
-                    const recordElement = document.getElementById(`record-${newRecord.id}`);
-                    if (recordElement) {
-                        recordElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                    }
-                }, 100);
-            });
-
-            // Add new user
-            userForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                if (!currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
-                    alert("You don't have permission to manage users.");
-                    return;
-                }
-                
-                const userName = document.getElementById('userName').value;
-                const permissionCheckboxes = document.querySelectorAll('input[name="permissions"]:checked');
-                const userPermissions = Array.from(permissionCheckboxes).map(cb => cb.value);
-                
-                // Determine role based on permissions
-                let userRole = "Standard User";
-                if (userPermissions.includes(PERMISSIONS.MANAGE_USERS)) {
-                    userRole = "Administrator";
-                } else if (userPermissions.length >= 3) {
-                    userRole = "Advanced User";
-                }
-                
-                const newUser = {
-                    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-                    name: userName,
-                    permissions: userPermissions,
-                    role: userRole,
-                    isActive: true
-                };
-                
-                users.push(newUser);
-                renderUsers();
-                
-                // Save to localStorage
-                saveToLocalStorage();
-                
-                // Reset form
-                userForm.reset();
-                
-                // Check "add" permission by default
-                document.getElementById('permAdd').checked = true;
-                
-                alert(`User "${userName}" added successfully with ${userPermissions.length} permission(s).`);
-            });
-
-            // Close modal
-            closeModal.addEventListener('click', () => {
-                shareModal.style.display = 'none';
-            });
-
-            // Share via Email
-            shareEmail.addEventListener('click', () => {
-                if (currentRecordToShare) {
-                    const subject = `Car Service Record: ${currentRecordToShare.carType}`;
-                    
-                    let body = `Car Service Record:\n`;
-                    body += `Car: ${currentRecordToShare.carType}\n`;
-                    body += `Service: ${currentRecordToShare.serviceType}\n`;
-                    
-                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
-                        body += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
-                    }
-                    
-                    body += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
-                    body += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
-                    
-                    if (currentRecordToShare.notes) {
-                        body += `Notes: ${currentRecordToShare.notes}\n`;
-                    }
-                    
-                    body += `\nShared via Car Service Tracker`;
-                    
-                    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                }
-            });
-
-            // Share via WhatsApp
-            shareWhatsApp.addEventListener('click', () => {
-                if (currentRecordToShare) {
-                    let text = `Car Service Record:\n`;
-                    text += `Car: ${currentRecordToShare.carType}\n`;
-                    text += `Service: ${currentRecordToShare.serviceType}\n`;
-                    
-                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
-                        text += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
-                    }
-                    
-                    text += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
-                    text += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
-                    
-                    if (currentRecordToShare.notes) {
-                        text += `Notes: ${currentRecordToShare.notes}\n`;
-                    }
-                    
-                    text += `\nShared via Car Service Tracker`;
-                    
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                }
-            });
-
-            // Copy link to clipboard
-            shareLink.addEventListener('click', () => {
-                if (currentRecordToShare) {
-                    let text = `Car Service Record:\n`;
-                    text += `Car: ${currentRecordToShare.carType}\n`;
-                    text += `Service: ${currentRecordToShare.serviceType}\n`;
-                    
-                    if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
-                        text += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
-                    }
-                    
-                    text += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
-                    text += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
-                    
-                    if (currentRecordToShare.notes) {
-                        text += `Notes: ${currentRecordToShare.notes}\n`;
-                    }
-                    
-                    text += `\nShared via Car Service Tracker`;
-                    
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('Service record copied to clipboard! You can now paste it anywhere.');
-                    });
-                }
-            });
-
-            // Close modal when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === shareModal) {
-                    shareModal.style.display = 'none';
-                }
-            });
+        function handleLogout() {
+            currentUser = null;
+            showLoginScreen();
         }
 
-        // Format currency
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(amount);
-        }
-
-        // Format date
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        // Format datetime
-        function formatDateTime(dateTimeString) {
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            return new Date(dateTimeString).toLocaleDateString('en-US', options);
-        }
-
-        // Update selected oil types display
-        function updateSelectedOilTypes() {
-            const selectedCheckboxes = document.querySelectorAll('input[name="oilType"]:checked');
-            const selectedValues = Array.from(selectedCheckboxes).map(cb => cb.value);
-            
-            // Update summary display
-            if (selectedValues.length > 0) {
-                oilSummaryDiv.style.display = 'block';
-                selectedOilTagsDiv.innerHTML = selectedValues.map(value => 
-                    `<div class="oil-tag"><i class="fas fa-check"></i> ${value}</div>`
-                ).join('');
-            } else {
-                oilSummaryDiv.style.display = 'none';
-                selectedOilTagsDiv.innerHTML = '';
+        function toggleUsersSection() {
+            if (!currentUser || !currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                alert('You do not have permission to manage users.');
+                return;
             }
-            
-            // Update visual feedback for selected options
-            oilTypeCheckboxes.forEach(checkbox => {
-                const optionDiv = checkbox.parentElement.parentElement;
-                if (checkbox.checked) {
-                    optionDiv.classList.add('selected');
-                } else {
-                    optionDiv.classList.remove('selected');
-                }
-            });
+            usersSection.style.display = 'block';
+            recordsSection.style.display = 'none';
+            formSection.style.display = 'none';
         }
 
-        // Show/hide oil options based on service type selection
-        function toggleOilOptions() {
-            const selectedService = serviceTypeSelect.value;
-            
-            if (selectedService === "Oil Change") {
+        function backToMainFromUsers() {
+            usersSection.style.display = 'none';
+            recordsSection.style.display = 'block';
+            formSection.style.display = 'block';
+        }
+
+        function handleServiceTypeChange() {
+            const val = serviceTypeSelect.value;
+            if (val === 'Oil Change') {
                 oilOptionsDiv.style.display = 'block';
-                updateSelectedOilTypes();
             } else {
                 oilOptionsDiv.style.display = 'none';
-                oilSummaryDiv.style.display = 'none';
-                // Clear oil type selection
-                oilTypeCheckboxes.forEach(checkbox => {
-                    checkbox.checked = false;
-                    checkbox.parentElement.parentElement.classList.remove('selected');
-                });
-                selectedOilTagsDiv.innerHTML = '';
+                hideOilSummary();
+                // clear oil checkboxes
+                const checkboxes = oilOptionsDiv.querySelectorAll('input[name="oilType"]');
+                checkboxes.forEach(cb => cb.checked = false);
             }
         }
 
-        // Update current user UI
-        function updateCurrentUserUI() {
-            currentUserName.textContent = currentUser.name;
-            currentUserRole.textContent = currentUser.role;
+        function updateOilSummary() {
+            const checked = Array.from(oilOptionsDiv.querySelectorAll('input[name="oilType"]:checked'));
+            selectedOilTagsDiv.innerHTML = '';
+            if (checked.length === 0) {
+                hideOilSummary();
+                return;
+            }
+            checked.forEach(cb => {
+                const tag = document.createElement('div');
+                tag.className = 'oil-tag';
+                tag.textContent = cb.value;
+                selectedOilTagsDiv.appendChild(tag);
+            });
+            oilSummaryDiv.style.display = 'block';
         }
 
-        // Update UI based on user permissions
-        function updateUIForPermissions() {
-            // Show/hide add record button
-            saveRecordBtn.disabled = !currentUser.permissions.includes(PERMISSIONS.ADD);
-            
-            // Show/hide manage users button
-            manageUsersBtn.style.display = currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS) ? 'inline-block' : 'none';
+        function hideOilSummary() {
+            oilSummaryDiv.style.display = 'none';
+            selectedOilTagsDiv.innerHTML = '';
         }
 
-        // Generate record HTML
-        function generateRecordHTML(record) {
-            // Generate oil type tags if any
-            const oilTagsHTML = record.oilTypes && record.oilTypes.length > 0 ? 
-                `<div class="oil-info-container">
-                    <div class="oil-tags-record">
-                        ${record.oilTypes.map(oil => 
-                            `<div class="oil-tag-record"><i class="fas fa-oil-can"></i> ${oil}</div>`
-                        ).join('')}
-                    </div>
-                </div>` : '';
-            
-            // Check user permissions for this record
-            const canEdit = currentUser.permissions.includes(PERMISSIONS.EDIT);
-            const canDelete = currentUser.permissions.includes(PERMISSIONS.DELETE);
-            const canShare = currentUser.permissions.includes(PERMISSIONS.SHARE);
-            
-            return `
-                <div class="record-item" id="record-${record.id}">
-                    <div class="record-header">
-                        <div class="car-type">${record.carType}</div>
-                        <span class="service-type">${record.serviceType}</span>
-                    </div>
-                    
-                    ${oilTagsHTML}
-                    
-                    <div class="record-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Service Date</span>
-                            <span class="detail-value">${formatDate(record.serviceDate)}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Price</span>
-                            <span class="detail-value">${formatCurrency(record.price)}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Record ID</span>
-                            <span class="detail-value">#${record.id.toString().padStart(3, '0')}</span>
-                        </div>
-                        ${record.oilTypes && record.oilTypes.length > 0 ? `
-                        <div class="detail-item">
-                            <span class="detail-label">Oil Types</span>
-                            <span class="detail-value">${record.oilTypes.length} type(s)</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                    
-                    ${record.notes ? `
-                        <div class="detail-item" style="margin-top: 10px;">
-                            <span class="detail-label">Notes</span>
-                            <span class="detail-value">${record.notes}</span>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="record-footer">
-                        <div>
-                            <span class="detail-label">Created by ${record.createdBy} on ${formatDateTime(record.createdAt)}</span>
-                        </div>
-                        <div>
-                            ${record.lastModifiedBy !== record.createdBy ? 
-                                `<span class="detail-label">Last modified by ${record.lastModifiedBy}</span>` : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="record-actions">
-                        ${canDelete ? `
-                        <button class="btn btn-delete" onclick="deleteRecord(${record.id})">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                        ` : ''}
-                        
-                        ${canEdit ? `
-                        <button class="btn btn-edit" onclick="editRecord(${record.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        ` : ''}
-                        
-                        ${canShare ? `
-                        <button class="btn btn-share" onclick="openShareModal(${record.id})">
-                            <i class="fas fa-share"></i> Share
-                        </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Generate user HTML
-        function generateUserHTML(user) {
-            const isCurrentUser = user.id === currentUser.id;
-            const canManageUsers = currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS);
-            
-            return `
-                <div class="user-item" id="user-${user.id}">
-                    <div class="user-details">
-                        <div class="user-name">
-                            ${user.name}
-                            ${isCurrentUser ? ' <span style="color: #3498db;">(You)</span>' : ''}
-                            ${user.role === "Administrator" ? ' <span style="color: #e74c3c;">(Admin)</span>' : ''}
-                        </div>
-                        <div class="user-permissions">
-                            ${user.permissions.map(perm => 
-                                `<span class="permission-tag">${perm.replace('_', ' ')}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                    <div class="user-actions-small">
-                        ${canManageUsers && !isCurrentUser ? `
-                        <button class="btn btn-small btn-edit" onclick="editUser(${user.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-small btn-delete" onclick="deleteUser(${user.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Render records
         function renderRecords() {
-            if (!serviceRecords || serviceRecords.length === 0) {
-                recordsList.innerHTML = `
-                    <div class="empty-records">
-                        <i class="fas fa-clipboard-list"></i>
-                        <h3>No Service Records Yet</h3>
-                        <p>Add your first car service record using the form on the left</p>
-                    </div>
-                `;
+            recordsList.innerHTML = '';
+            if (serviceRecords.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-records';
+                empty.innerHTML = '<i class="fas fa-clipboard-list"></i><h3>No Service Records Yet</h3><p>Add your first car service record using the form on the left</p>';
+                recordsList.appendChild(empty);
                 return;
             }
 
-            recordsList.innerHTML = serviceRecords
-                .map(record => generateRecordHTML(record))
-                .reverse()
-                .join('');
+            serviceRecords.slice().reverse().forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'record-item';
+
+                const header = document.createElement('div');
+                header.className = 'record-header';
+                header.innerHTML = `<div class="car-type">${escapeHtml(record.carType)}</div><div class="service-type">${escapeHtml(record.serviceType)}</div>`;
+                item.appendChild(header);
+
+                const details = document.createElement('div');
+                details.className = 'record-details';
+
+                details.appendChild(detailElement('Date', record.serviceDate));
+                details.appendChild(detailElement('Price', record.price ? `$${parseFloat(record.price).toFixed(2)}` : '-'));
+                details.appendChild(detailElement('Notes', escapeHtml(record.notes || '-')));
+                if (record.oilTypes && record.oilTypes.length > 0) {
+                    const oilDiv = document.createElement('div');
+                    oilDiv.className = 'detail-item';
+                    const label = document.createElement('div');
+                    label.className = 'detail-label';
+                    label.textContent = 'Oil Types';
+                    const val = document.createElement('div');
+                    val.className = 'detail-value';
+                    const tags = document.createElement('div');
+                    tags.className = 'oil-tags-record';
+                    record.oilTypes.forEach(t => {
+                        const tag = document.createElement('div');
+                        tag.className = 'oil-tag-record';
+                        tag.textContent = t;
+                        tags.appendChild(tag);
+                    });
+                    val.appendChild(tags);
+                    oilDiv.appendChild(label);
+                    oilDiv.appendChild(val);
+                    details.appendChild(oilDiv);
+                }
+
+                item.appendChild(details);
+
+                const actions = document.createElement('div');
+                actions.className = 'record-actions';
+
+                const shareBtn = document.createElement('button');
+                shareBtn.className = 'btn btn-share btn-small';
+                shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> Share';
+                shareBtn.addEventListener('click', () => openShareModal(record.id));
+                actions.appendChild(shareBtn);
+
+                if (currentUser && currentUser.permissions.includes(PERMISSIONS.EDIT)) {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn btn-edit btn-small';
+                    editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                    editBtn.addEventListener('click', () => editRecord(record.id));
+                    actions.appendChild(editBtn);
+                }
+
+                if (currentUser && currentUser.permissions.includes(PERMISSIONS.DELETE)) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-delete btn-small';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+                    deleteBtn.addEventListener('click', () => deleteRecord(record.id));
+                    actions.appendChild(deleteBtn);
+                }
+
+                item.appendChild(actions);
+
+                const footer = document.createElement('div');
+                footer.className = 'record-footer';
+                footer.innerHTML = `<div>Recorded by: ${escapeHtml(record.recordedBy || 'N/A')}</div><div>${new Date(record.createdAt).toLocaleString()}</div>`;
+                item.appendChild(footer);
+
+                recordsList.appendChild(item);
+            });
         }
 
-        // Render users
+        function detailElement(labelText, valueText) {
+            const el = document.createElement('div');
+            el.className = 'detail-item';
+            const label = document.createElement('div');
+            label.className = 'detail-label';
+            label.textContent = labelText;
+            const val = document.createElement('div');
+            val.className = 'detail-value';
+            val.textContent = valueText;
+            el.appendChild(label);
+            el.appendChild(val);
+            return el;
+        }
+
+        function openShareModal(recordId) {
+            const record = serviceRecords.find(r => r.id === recordId);
+            if (!record) return;
+            currentRecordToShare = record;
+            shareRecordText.textContent = formatRecordText(record);
+            shareModal.style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            currentRecordToShare = null;
+            shareModal.style.display = 'none';
+        }
+
+        function formatRecordText(record) {
+            const lines = [];
+            lines.push(`Car: ${record.carType}`);
+            lines.push(`Service: ${record.serviceType}`);
+            lines.push(`Date: ${record.serviceDate}`);
+            lines.push(`Price: ${record.price ? `$${parseFloat(record.price).toFixed(2)}` : '-'}`);
+            if (record.oilTypes && record.oilTypes.length) {
+                lines.push(`Oil Types: ${record.oilTypes.join(', ')}`);
+            }
+            if (record.notes) lines.push(`Notes: ${record.notes}`);
+            lines.push(`Recorded by: ${record.recordedBy || 'N/A'}`);
+            return lines.join('\n');
+        }
+
+        function shareByEmail() {
+            if (!currentRecordToShare) return;
+            const subject = encodeURIComponent('Service Record: ' + currentRecordToShare.carType);
+            const body = encodeURIComponent(formatRecordText(currentRecordToShare));
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+
+        function shareByWhatsApp() {
+            if (!currentRecordToShare) return;
+            const text = encodeURIComponent(formatRecordText(currentRecordToShare));
+            const url = `https://api.whatsapp.com/send?text=${text}`;
+            window.open(url, '_blank');
+        }
+
+        function copyShareLink() {
+            if (!currentRecordToShare) return;
+            const text = formatRecordText(currentRecordToShare);
+            navigator.clipboard?.writeText(text).then(() => {
+                alert('Record text copied to clipboard.');
+            }).catch(() => {
+                alert('Unable to copy to clipboard.');
+            });
+        }
+
+        function editRecord(recordId) {
+            const record = serviceRecords.find(r => r.id === recordId);
+            if (!record) return;
+            // populate form for editing
+            document.getElementById('carType').value = record.carType;
+            document.getElementById('serviceType').value = record.serviceType;
+            document.getElementById('serviceDate').value = record.serviceDate;
+            document.getElementById('price').value = record.price;
+            document.getElementById('notes').value = record.notes || '';
+            handleServiceTypeChange();
+            // set oil checkboxes
+            const checkboxes = oilOptionsDiv.querySelectorAll('input[name="oilType"]');
+            checkboxes.forEach(cb => cb.checked = record.oilTypes?.includes(cb.value) || false);
+            updateOilSummary();
+
+            // remove old id if editing (simple approach: delete old, let submit create new)
+            deleteRecord(recordId, false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteRecord(recordId, confirmDelete = true) {
+            if (confirmDelete && !confirm('Delete this record?')) return;
+            serviceRecords = serviceRecords.filter(r => r.id !== recordId);
+            renderRecords();
+        }
+
+        function handleServiceFormSubmit(e) {
+            e.preventDefault();
+            if (!currentUser || !currentUser.permissions.includes(PERMISSIONS.ADD)) {
+                alert('You do not have permission to add records.');
+                return;
+            }
+
+            const carType = document.getElementById('carType').value.trim();
+            const serviceType = document.getElementById('serviceType').value;
+            const serviceDate = document.getElementById('serviceDate').value;
+            const price = document.getElementById('price').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            let oilTypes = [];
+            if (serviceType === 'Oil Change') {
+                oilTypes = Array.from(oilOptionsDiv.querySelectorAll('input[name="oilType"]:checked')).map(cb => cb.value);
+            }
+
+            const record = {
+                id: Date.now(),
+                carType,
+                serviceType,
+                serviceDate,
+                price,
+                notes,
+                oilTypes,
+                recordedBy: currentUser ? currentUser.name : 'Unknown',
+                createdAt: Date.now()
+            };
+
+            serviceRecords.push(record);
+            renderRecords();
+            serviceForm.reset();
+            document.getElementById('serviceDate').valueAsDate = new Date();
+            handleServiceTypeChange();
+            alert('Service record saved.');
+        }
+
         function renderUsers() {
+            userList.innerHTML = '';
             if (!users || users.length === 0) {
-                userList.innerHTML = `
-                    <div class="empty-users">
-                        <i class="fas fa-users"></i>
-                        <h3>No Users Added</h3>
-                        <p>Add your first user using the form above</p>
-                    </div>
-                `;
+                const empty = document.createElement('div');
+                empty.className = 'empty-users';
+                empty.innerHTML = '<i class="fas fa-users"></i><h3>No Users Added</h3><p>Add your first user using the form above</p>';
+                userList.appendChild(empty);
                 return;
             }
 
-            userList.innerHTML = users
-                .map(user => generateUserHTML(user))
-                .join('');
-        }
+            users.forEach(u => {
+                const item = document.createElement('div');
+                item.className = 'user-item';
+                const details = document.createElement('div');
+                details.className = 'user-details';
+                details.innerHTML = `<div class="user-name">${escapeHtml(u.name)}</div>`;
+                const perms = document.createElement('div');
+                perms.className = 'user-permissions';
+                (u.permissions || []).forEach(p => {
+                    const ptag = document.createElement('div');
+                    ptag.className = 'permission-tag';
+                    ptag.textContent = p;
+                    perms.appendChild(ptag);
+                });
+                details.appendChild(perms);
+                item.appendChild(details);
 
-        // Edit record (simplified - in a real app, this would populate the form)
-        function editRecord(id) {
-            if (!currentUser.permissions.includes(PERMISSIONS.EDIT)) {
-                alert("You don't have permission to edit records.");
-                return;
-            }
-            
-            const record = serviceRecords.find(r => r.id === id);
-            if (record) {
-                // In a more advanced version, this would populate the form for editing
-                // For now, we'll just update the last modified info
-                const now = new Date().toISOString();
-                record.lastModifiedBy = currentUser.name;
-                record.lastModifiedAt = now;
-                
-                // Save and re-render
-                saveToLocalStorage();
-                renderRecords();
-                
-                alert(`Record #${id} marked as modified by ${currentUser.name}. In a full implementation, you would be able to edit all fields.`);
-            }
-        }
-
-        // Delete record
-        function deleteRecord(id) {
-            if (!currentUser.permissions.includes(PERMISSIONS.DELETE)) {
-                alert("You don't have permission to delete records.");
-                return;
-            }
-            
-            if (confirm("Are you sure you want to delete this service record?")) {
-                serviceRecords = serviceRecords.filter(record => record.id !== id);
-                renderRecords();
-                
-                // Save to localStorage
-                saveToLocalStorage();
-            }
-        }
-
-        // Edit user (simplified)
-        function editUser(id) {
-            alert(`Editing user #${id}. In a full implementation, this would open an edit form.`);
-        }
-
-        // Delete user
-        function deleteUser(id) {
-            if (!currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
-                alert("You don't have permission to delete users.");
-                return;
-            }
-            
-            const userToDelete = users.find(u => u.id === id);
-            if (!userToDelete) return;
-            
-            if (confirm(`Are you sure you want to remove "${userToDelete.name}"?`)) {
-                users = users.filter(user => user.id !== id);
-                renderUsers();
-                
-                // Save to localStorage
-                saveToLocalStorage();
-            }
-        }
-
-        // Open share modal
-        function openShareModal(id) {
-            if (!currentUser.permissions.includes(PERMISSIONS.SHARE)) {
-                alert("You don't have permission to share records.");
-                return;
-            }
-            
-            currentRecordToShare = serviceRecords.find(record => record.id === id);
-            
-            if (currentRecordToShare) {
-                let shareText = `Car Service Record:\n`;
-                shareText += `Car: ${currentRecordToShare.carType}\n`;
-                shareText += `Service: ${currentRecordToShare.serviceType}\n`;
-                
-                if (currentRecordToShare.oilTypes && currentRecordToShare.oilTypes.length > 0) {
-                    shareText += `Oil Types: ${currentRecordToShare.oilTypes.join(', ')}\n`;
+                const actions = document.createElement('div');
+                actions.className = 'user-actions-small';
+                if (currentUser && currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                    const del = document.createElement('button');
+                    del.className = 'btn btn-delete btn-small';
+                    del.innerHTML = '<i class="fas fa-trash"></i>';
+                    del.title = 'Remove user';
+                    del.addEventListener('click', () => {
+                        if (u.id === defaultAdminUser.id) {
+                            alert('Cannot remove default admin.');
+                            return;
+                        }
+                        if (confirm('Remove this user?')) {
+                            users = users.filter(x => x.id !== u.id);
+                            renderUsers();
+                        }
+                    });
+                    actions.appendChild(del);
                 }
-                
-                shareText += `Date: ${formatDate(currentRecordToShare.serviceDate)}\n`;
-                shareText += `Price: ${formatCurrency(currentRecordToShare.price)}\n`;
-                
-                if (currentRecordToShare.notes) {
-                    shareText += `Notes: ${currentRecordToShare.notes}\n`;
-                }
-                
-                shareText += `\nShared via Car Service Tracker`;
-                
-                shareRecordText.textContent = shareText;
-                shareModal.style.display = 'flex';
-            }
+                item.appendChild(actions);
+
+                userList.appendChild(item);
+            });
         }
 
-        // Save data to localStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('carServiceRecords', JSON.stringify(serviceRecords));
-            localStorage.setItem('carServiceUsers', JSON.stringify(users));
-            localStorage.setItem('currentCarServiceUser', JSON.stringify(currentUser));
+        function handleUserFormSubmit(e) {
+            e.preventDefault();
+            if (!currentUser || !currentUser.permissions.includes(PERMISSIONS.MANAGE_USERS)) {
+                alert('You do not have permission to add users.');
+                return;
+            }
+            const name = document.getElementById('userName').value.trim();
+            const perms = Array.from(document.querySelectorAll('#userForm input[name="permissions"]:checked')).map(cb => cb.value);
+
+            const newUser = {
+                id: Date.now(),
+                name,
+                permissions: perms,
+                role: perms.includes(PERMISSIONS.MANAGE_USERS) ? 'Administrator' : 'User',
+                isActive: true
+            };
+            users.push(newUser);
+            renderUsers();
+            userForm.reset();
+            alert('User added.');
         }
 
-        // Load data from localStorage
-        function loadFromLocalStorage() {
-            const savedRecords = localStorage.getItem('carServiceRecords');
-            const savedUsers = localStorage.getItem('carServiceUsers');
-            const savedCurrentUser = localStorage.getItem('currentCarServiceUser');
-            
-            if (savedRecords) {
-                serviceRecords = JSON.parse(savedRecords);
-            }
-            
-            if (savedUsers) {
-                users = JSON.parse(savedUsers);
-            }
-            
-            if (savedCurrentUser) {
-                currentUser = JSON.parse(savedCurrentUser);
-            }
-            
-            // If no data in localStorage, initialize with default data
-            if (!serviceRecords || serviceRecords.length === 0) {
-                initializeData();
-            }
+        // Utility: basic HTML escape to avoid injection in simple text nodes
+        function escapeHtml(str) {
+            if (!str && str !== 0) return '';
+            return String(str).replace(/[&<>"'`=\/]/g, function(s) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                    '/': '&#x2F;',
+                    '=': '&#x3D;',
+                    '`': '&#x60;'
+                }[s];
+            });
         }
 
-        // Initialize oil options visibility
-        function initializeUI() {
-            toggleOilOptions();
-        }
+        // Attach listeners and initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // assign DOM elements
+            loginScreen = document.getElementById('loginScreen');
+            mainApp = document.getElementById('mainApp');
+            passwordInput = document.getElementById('passwordInput');
+            loginBtn = document.getElementById('loginBtn');
+            loginError = document.getElementById('loginError');
+            logoutBtn = document.getElementById('logoutBtn');
+            manageUsersBtn = document.getElementById('manageUsersBtn');
+            currentUserName = document.getElementById('currentUserName');
+            currentUserRole = document.getElementById('currentUserRole');
+            serviceForm = document.getElementById('serviceForm');
+            serviceTypeSelect = document.getElementById('serviceType');
+            oilOptionsDiv = document.getElementById('oilOptions');
+            oilSummaryDiv = document.getElementById('oilSummary');
+            selectedOilTagsDiv = document.getElementById('selectedOilTags');
+            recordsList = document.getElementById('recordsList');
+            shareModal = document.getElementById('shareModal');
+            closeModal = document.getElementById('closeModal');
+            shareRecordText = document.getElementById('shareRecordText');
+            shareEmail = document.getElementById('shareEmail');
+            shareWhatsApp = document.getElementById('shareWhatsApp');
+            shareLink = document.getElementById('shareLink');
+            formSection = document.getElementById('formSection');
+            recordsSection = document.getElementById('recordsSection');
+            usersSection = document.getElementById('usersSection');
+            userForm = document.getElementById('userForm');
+            userList = document.getElementById('userList');
+            backToMainBtn = document.getElementById('backToMainBtn');
+            saveRecordBtn = document.getElementById('saveRecordBtn');
 
-        // Auto-login for convenience during development
-        // Remove this in production or change the password
-        function autoLoginForDevelopment() {
-            setTimeout(() => {
-                loginScreen.style.display = 'none';
-                mainApp.style.display = 'block';
-                initializeData();
-                loadFromLocalStorage();
-                updateCurrentUserUI();
-                renderRecords();
-                renderUsers();
-                updateUIForPermissions();
-                initializeUI();
-            }, 100);
-        }
+            // Initialize date field
+            try {
+                document.getElementById('serviceDate').valueAsDate = new Date();
+            } catch (err) {
+                // ignore if not supported
+            }
 
-        // Initialize everything when page loads
-        function initializeApp() {
             // Initialize data
             initializeData();
-            
-            // Initialize event listeners
-            initializeEventListeners();
-            
-            // Initialize UI
-            initializeUI();
-            
-            // Auto-login for development (comment this out for production)
-            autoLoginForDevelopment();
-        }
 
-        // Start the app when page loads
-        window.addEventListener('DOMContentLoaded', initializeApp);
+            // Ensure login screen is shown at start (no auto-login)
+            showLoginScreen();
+
+            // event listeners
+            loginBtn.addEventListener('click', handleLogin);
+            passwordInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+            logoutBtn.addEventListener('click', handleLogout);
+            manageUsersBtn.addEventListener('click', toggleUsersSection);
+            backToMainBtn.addEventListener('click', backToMainFromUsers);
+            serviceTypeSelect.addEventListener('change', handleServiceTypeChange);
+            serviceForm.addEventListener('submit', handleServiceFormSubmit);
+            userForm.addEventListener('submit', handleUserFormSubmit);
+            closeModal.addEventListener('click', closeShareModal);
+            shareEmail.addEventListener('click', shareByEmail);
+            shareWhatsApp.addEventListener('click', shareByWhatsApp);
+            shareLink.addEventListener('click', copyShareLink);
+
+            // oil checkbox changes
+            oilOptionsDiv.querySelectorAll('input[name="oilType"]').forEach(cb => {
+                cb.addEventListener('change', updateOilSummary);
+            });
+
+            // Click outside share content to close
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) closeShareModal();
+            });
+        });
     </script>
 </body>
 </html>
